@@ -50,7 +50,7 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
             while (true) {
                 const mensagem = await interaction.fetchReply() //usando o fetchReply(), "pega" a mensagem(card) que o bot enviou no interaction.editReply e guarda na variavel mensagem
             
-                const clique = await mensagem.awaitMessageComponent({ time: 3000 }) // espera(30s) o usario interagir com algum component da mensagem(no caso, o botão), caso não receba a interação, da erro, que é tratado no catch
+                const clique = await mensagem.awaitMessageComponent({ time: 30000 }) // espera(30s) o usario interagir com algum component da mensagem(no caso, o botão), caso não receba a interação, da erro, que é tratado no catch
 
                 await MensagemPiada() //chama a função "MensagemPiada"
 
