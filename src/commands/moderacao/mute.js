@@ -28,7 +28,7 @@ module.exports = { //exporta como modulo para facil leitura para o bot
 
         await membro.timeout(duracao * 60 * 1000, motivo);
         //aplica o timeout no membro, a conta converte minutos para miliseg, pois o dc exige o tempo nesse formato
-        await interation.reply({ content: `${membro.user.tag} foi silenciado por ${duracao} min. Motivo: ${motivo}`, epheremal: true });
+        await interation.reply({ content: `${membro.user.tag} foi silenciado por ${duracao} min. Motivo: ${motivo}`, ephemeral: true });
         //responde confirmando o mute. Usa membro.user.tag (e não usuario.tag diretamente) porque o objeto é o member, então é preciso acessar o .user dentro dele
     }
 }
