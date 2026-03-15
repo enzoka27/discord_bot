@@ -18,6 +18,10 @@ module.exports = { //exporta como modulo para facil leitura para o bot
 
     async execute(interation){ //função assíncrona chamada quando alguem usa o /mute.
         
+        if(!interation.guild){
+            return interation.reply({ content: 'Este comando só pode ser usado em servidores. Me adicione em um servidor e poderá utilizar os comando devidamente!', ephemeral: true});
+        }//garante que o comando só funciona em servidores 
+
         const membro = interation.guild.members.cache.get(interation.options.getUser('usuario').id);
         //pega usuario( getUser ), extrai ID dele( .id ) e busca o membro do servidor pelo ID no cache( members.cache.get(id) )
         //isso é necessário porque .timeout() só existe no objeto member, não no user 
@@ -28,7 +32,7 @@ module.exports = { //exporta como modulo para facil leitura para o bot
 
         await membro.timeout(duracao * 60 * 1000, motivo);
         //aplica o timeout no membro, a conta converte minutos para miliseg, pois o dc exige o tempo nesse formato
-        await interation.reply({ content: `${membro.user.tag} foi silenciado por ${duracao} min. Motivo: ${motivo}`, ephemeral: true });
+        await interation.reply({ content: `${membro.user.tag} foi silenciado por ${duracao} min. Motivo: ${motivo}`, ephemeral: false });
         //responde confirmando o mute. Usa membro.user.tag (e não usuario.tag diretamente) porque o objeto é o member, então é preciso acessar o .user dentro dele
     }
 }
