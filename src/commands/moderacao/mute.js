@@ -30,9 +30,13 @@ module.exports = { //exporta como modulo para facil leitura para o bot
         const motivo = interation.options.getString('motivo') ?? 'Sem motivo';
         //pega o txt da opção motivo, se não foi preenchida, usa 'Sem motivo' como padrão (operador ?? = nullish coalescing)
 
-        await membro.timeout(duracao * 60 * 1000, motivo);
-        //aplica o timeout no membro, a conta converte minutos para miliseg, pois o dc exige o tempo nesse formato
-        await interation.reply({ content: `${membro.user.tag} foi silenciado por ${duracao} min. Motivo: ${motivo}`, ephemeral: false });
-        //responde confirmando o mute. Usa membro.user.tag (e não usuario.tag diretamente) porque o objeto é o member, então é preciso acessar o .user dentro dele
+        try{
+            await membro.timeout(duracao * 60 * 1000, motivo);
+            //aplica o timeout no membro, a conta converte minutos para miliseg, pois o dc exige o tempo nesse formato
+            await interation.reply({ content: `${membro.user.tag} foi silenciado por ${duracao} min. Motivo: ${motivo}`, ephemeral: false });
+            //responde confirmando o mute. Usa membro.user.tag (e não usuario.tag diretamente) porque o objeto é o member, então é preciso acessar o .user dentro dele
+        } catch (erro){
+            await interation.reply({ content: 'Não foi possível silenciar este usuário. Verifique se ele tem um cargo superior ao do bot.', ephemeral: true});
+        }
     }
 }
