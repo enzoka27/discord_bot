@@ -22,8 +22,8 @@ module.exports = { //exporta como modulo para facil leitura para o bot
             return interation.reply({ content: 'Este comando só pode ser usado em servidores. Me adicione em um servidor e poderá utilizar os comando devidamente!', ephemeral: true});
         }//garante que o comando só funciona em servidores 
 
-        const membro = interation.guild.members.cache.get(interation.options.getUser('usuario').id);
-        //pega usuario( getUser ), extrai ID dele( .id ) e busca o membro do servidor pelo ID no cache( members.cache.get(id) )
+        const membro = await interation.guild.members.fetch(interation.options.getUser('usuario').id);
+        //pega usuario( getUser ), extrai ID dele( .id ) e busca o membro do servidor pelo ID no usando fetch, para pegar diretamente da API do dc
         //isso é necessário porque .timeout() só existe no objeto member, não no user 
         const duracao = interation.options.getInteger('duracao');
         //pega o número inteiro digitado na opção duracao
