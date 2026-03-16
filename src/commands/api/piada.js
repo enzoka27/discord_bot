@@ -1,4 +1,4 @@
-const { SlashCommandBuilder , EmbedBuilder , ActionRowBuilder , ButtonBuilder , ButtonStyle, time } = require('discord.js'); //está importando componentes da biblioteca discord.js
+const { SlashCommandBuilder , EmbedBuilder , ActionRowBuilder , ButtonBuilder , ButtonStyle} = require('discord.js'); //está importando componentes da biblioteca discord.js
 const axios = require('axios') //está importando a biblioteca axios
 
 module.exports = { //exporta o "data" e "execute", para ser usado em outros arquivos(como o index.js)
@@ -23,7 +23,6 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
                 const piada = resposta.data; // coloca o resultado do request na variavel piada(.data é para pegar apenas o conteudo da API em si)
 
                 const corAleatoria = Math.floor(Math.random() * 0xFFFFFF) //cria variavel corAleatoria, com calculo para escolher um hexadecimal de cor aleatorio, para colocar a cor do card
-
                 embed = new EmbedBuilder() //cria novo card
                     .setColor(corAleatoria) // escolhe a cor do card (nesse caso, aleatoria)
                     .setTitle('😂 Piada de Programação') // escolhe o titulo do card
@@ -69,7 +68,7 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
 
             } else { //se for outro erro
                 console.error(erro); //mostra o erro no terminal
-                await interaction.editReply('😵 Algo deu errado ao buscar a piada. Tente novamente!') //no discord avisa que não conseguiu buscar piada 
+                await interaction.editReply('😵 Algo deu errado ao buscar a piada. Tente novamente!') //no discord avisa que não conseguiu buscar piada(apenas para o usuario)
             }
             
         }
