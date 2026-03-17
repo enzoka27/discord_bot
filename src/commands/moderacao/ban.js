@@ -22,7 +22,6 @@ module.exports = {
         }
 
         const usuarioAlvo = interaction.options.getUser('usuario');
-        const membro = await interaction.guild.members.fetch(usuarioAlvo.id).catch(() => null);
         const motivo = interaction.options.getString('motivo') ?? 'Sem motivo';
 
         try{
