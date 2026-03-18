@@ -4,6 +4,7 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const warnings = new Map(); //(reseta quando o bot reinicia)
 
 module.exports = {
+    warnings, //exporta o Map para que outros arquivos possam acessar o mesmo objeto
     data: new SlashCommandBuilder()
         .setName('warn')
         .setDescription('Avisa um usuário do servidor')
