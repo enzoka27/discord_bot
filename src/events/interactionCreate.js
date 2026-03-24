@@ -1,6 +1,7 @@
 module.exports = {
   name: 'interactionCreate',
   async execute(interaction) {
+    
     if (!interaction.isChatInputCommand()) return;
 
     const comando = interaction.client.commands.get(interaction.commandName);
@@ -9,6 +10,7 @@ module.exports = {
     try {
       await comando.execute(interaction);
     } catch (erro) {
+      console.error(erro);
       if (interaction.deferred) {
         await interaction.editReply({ content: '❌ Erro ao executar o comando.' });
       } 

@@ -5,6 +5,6 @@ module.exports = {
           .setDescription('Para a música atual'),
           async execute(interaction){
             await interaction.client.distube.stop(interaction.guild);
-            await interaction.reply({content: 'Parei!', ephemeral: true});
+            await interaction.reply({content: 'Parei!'});
           }
 }
