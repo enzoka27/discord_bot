@@ -16,10 +16,13 @@ module.exports = { //metodo embutido do nodejs que permite enviar dados pra outr
             return;
           }
           const url = await fetch_music(music);
-          if (!url) { 
+          if (url == 'INVALID_LINK') { 
               await interaction.reply({content: 'Link inválido!', ephemeral: true});
               return;
             }
+          if (url == 'NOT_FOUND'){
+            await interaction.reply({content: 'Música não encontrada!', ephemeral: true});
+          }
             let in_fila = await interaction.client.distube.getQueue(interaction.guild)
             await interaction.deferReply();
             await interaction.client.distube.play(interaction.member.voice.channel, url);
@@ -39,7 +42,7 @@ function validate_link(link){ //valida o formato do link do youtube
 async function fetch_music(music) {
   if (music.startsWith('http')) {
     if (!validate_link(music)) {
-      return;
+      return 'INVALID_LINK';
     }
     return music;
   }
@@ -54,6 +57,9 @@ async function fetch_music(music) {
       key: process.env.YOUTUBE_TOKEN
     }
   })
+  if (!resposta.data.items || resposta.data.items.length === 0) {
+  return 'NOT_FOUND';
+}
   const complement_link = resposta.data.items[0].id.videoId
   return base_link + complement_link;
 }

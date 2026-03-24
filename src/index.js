@@ -19,7 +19,11 @@ const client = new Client({
 
 client.distube = new DisTube(client, {
   ffmpeg: { path: ffmpeg },
-  plugins: [new YtDlpPlugin({ update: false })]
+  plugins: [new YtDlpPlugin({
+    update: false,
+    ytdlOptions: {
+      cookies: 'cookies.txt'
+    }})]
 });
 client.distube.on('error', (error) => {
   console.error('Erro no distube:', error.message);
