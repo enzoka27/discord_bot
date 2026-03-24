@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js'); //importa o metodo slash... da biblioteca discordjs
 require('dotenv').config();
+const axios = require('axios');
 
 module.exports = { //metodo embutido do nodejs que permite enviar dados pra outro arquivo com require
   data: new SlashCommandBuilder() //utiliza o metodo slashcb e define suas configurações dentro do método
@@ -16,12 +17,18 @@ module.exports = { //metodo embutido do nodejs que permite enviar dados pra outr
           }
           const url = await fetch_music(music);
           if (!url) { 
-              await interaction.reply({ content: 'Link inválido!', ephemeral: true });
+              await interaction.reply({content: 'Link inválido!', ephemeral: true});
               return;
             }
+            let in_fila = await interaction.client.distube.getQueue(interaction.guild)
             await interaction.deferReply();
             await interaction.client.distube.play(interaction.member.voice.channel, url);
-            await interaction.editReply({ content: 'Tocando música!' });
+            if (in_fila){
+              await interaction.editReply({content: 'Adicionada à fila!'});
+            }
+            else{
+              await interaction.editReply({content: 'Tocando música!'});
+            }
   }
 }
 function validate_link(link){ //valida o formato do link do youtube
@@ -34,6 +41,19 @@ async function fetch_music(music) {
     if (!validate_link(music)) {
       return;
     }
+    return music;
   }
-  return music;
+  const url_api = 'https://www.googleapis.com/youtube/v3/search'
+  const base_link = 'https://www.youtube.com/watch?v='
+  const resposta = await axios.get(url_api, {
+    params: {
+      q: music,
+      part: 'snippet',
+      type: 'video',
+      maxResults: 1,
+      key: process.env.YOUTUBE_TOKEN
+    }
+  })
+  const complement_link = resposta.data.items[0].id.videoId
+  return base_link + complement_link;
 }
