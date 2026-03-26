@@ -4,7 +4,16 @@ module.exports = {
           .setName('skip')
           .setDescription('Pula para a próxima música'),
           async execute(interaction){
-            await interaction.client.distube.skip(interaction.guild);
-            await interaction.reply({content: 'Pulei!', ephemeral: true});
+            const queue = interaction.client.distube.getQueue(interaction.guild);
+            if (!queue){
+              await interaction.reply({content: 'Não tem nada tocando!', ephemeral: true});
+              return;
+            }
+            if (queue.songs.length > 1){
+              await interaction.client.distube.skip(interaction.guild);
+              await interaction.reply({content: 'Pulei!', ephemeral: true});
+              return;
+            }
+            await interaction.reply({content: 'Sem músicas na fila!', ephemeral: true});
           }
 }

@@ -6,6 +6,10 @@ module.exports = {
           .setDescription('Despausa a música atual'),
           async execute(interaction){
             const queue = interaction.client.distube.getQueue(interaction.guild);
+            if (!queue){
+              await interaction.reply({content: 'Não tem nada tocando!', ephemeral: true});
+              return;
+            }
             if (!queue.paused){
                 await interaction.reply({content: 'Já está tocando!', ephemeral: true});
                 return;

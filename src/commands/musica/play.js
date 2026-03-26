@@ -26,8 +26,9 @@ module.exports = { //metodo embutido do nodejs que permite enviar dados pra outr
             let in_fila = await interaction.client.distube.getQueue(interaction.guild)
             await interaction.deferReply();
             await interaction.client.distube.play(interaction.member.voice.channel, url);
+            const queue = interaction.client.distube.getQueue(interaction.guild);
             if (in_fila){
-              await interaction.editReply({content: 'Adicionada à fila!'});
+              await interaction.editReply({content: `Adicionada à fila! ${queue.lenght} músicas adiante!`});
             }
             else{
               await interaction.editReply({content: 'Tocando música!'});
