@@ -5,6 +5,7 @@ const path = require('path');
 const { DisTube } = require('distube');
 const ffmpeg = require('ffmpeg-static');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
+const { SpotifyPlugin } = require('@distube/spotify');
 
 // Cria o cliente do bot
 const client = new Client({
@@ -19,7 +20,7 @@ const client = new Client({
 
 client.distube = new DisTube(client, {
   ffmpeg: { path: ffmpeg },
-  plugins: [new YtDlpPlugin({
+  plugins: [new SpotifyPlugin(), new YtDlpPlugin({
     update: false,
     ytdlOptions: {
       cookies: 'cookies.txt'
