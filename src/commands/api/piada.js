@@ -53,7 +53,7 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
 
                 await MensagemPiada() //chama a função "MensagemPiada"
 
-                clique.update({ embeds: [embed], components: [linha]}) //quando receber a interação do usuario(clique), atualiza para a nova mensagem(novo card, com nova piada)
+                await clique.update({ embeds: [embed], components: [linha]}) //quando receber a interação do usuario(clique), atualiza para a nova mensagem(novo card, com nova piada)
 
             }
             
@@ -68,7 +68,7 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
 
             } else { //se for outro erro
                 console.error(erro); //mostra o erro no terminal
-                await interaction.editReply('😵 Algo deu errado ao buscar a piada. Tente novamente!') //no discord avisa que não conseguiu buscar piada(apenas para o usuario)
+                await interaction.editReply('😵 Algo deu errado ao buscar a piada. Tente novamente!') //no discord avisa que não conseguiu buscar piada
             }
             
         }
