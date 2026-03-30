@@ -3,7 +3,7 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('ping')
-    .setDescription('Verifica se o bot esta online'),
+    .setDescription('Verifica se o bot está online'),
 
   async execute(interaction) {
     const latencia = Date.now() - interaction.createdTimestamp;
