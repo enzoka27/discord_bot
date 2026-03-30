@@ -22,6 +22,15 @@ module.exports = { //metodo embutido do nodejs que permite enviar dados pra outr
             }
           if (url == 'NOT_FOUND'){
             await interaction.reply({content: 'Música não encontrada!', ephemeral: true});
+            return;
+          }
+          if (url == 'LIMIT_REACHED'){
+            await interaction.reply({content: 'Limite de requisições atingido!', ephemeral: true});
+            return;
+          }
+          if (url == 'API_ERROR'){
+            await interaction.reply({content: 'Erro ao buscar música!', ephemeral: true});
+            return;
           }
             let in_fila = await interaction.client.distube.getQueue(interaction.guild)
             await interaction.deferReply();
@@ -41,15 +50,19 @@ function validate_link(link){ //valida o formato do link do youtube
   }
 
 async function fetch_music(music) {
+  if (music.includes('spotify.com')) {
+  return music;
+}
   if (music.startsWith('http')) {
     if (!validate_link(music)) {
       return 'INVALID_LINK';
     }
     return music;
   }
-  const url_api = 'https://www.googleapis.com/youtube/v3/search'
-  const base_link = 'https://www.youtube.com/watch?v='
-  const resposta = await axios.get(url_api, {
+  try {
+    const url_api = 'https://www.googleapis.com/youtube/v3/search';
+    const base_link = 'https://www.youtube.com/watch?v=';
+    const resposta = await axios.get(url_api, {
     params: {
       q: music,
       part: 'snippet',
@@ -63,4 +76,11 @@ async function fetch_music(music) {
 }
   const complement_link = resposta.data.items[0].id.videoId
   return base_link + complement_link;
+  } 
+  catch (error) {
+    if (error.response.status == 403){
+      return 'LIMIT_REACHED';
+    }
+    return 'API_ERROR';
+  }
 }
