@@ -2,6 +2,10 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { DisTube } = require('distube');
+const ffmpeg = require('ffmpeg-static');
+const { YtDlpPlugin } = require('@distube/yt-dlp');
+const { SpotifyPlugin } = require('@distube/spotify');
 
 // Cria o cliente do bot
 const client = new Client({
@@ -12,6 +16,18 @@ const client = new Client({
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.MessageContent,
   ]
+});
+
+client.distube = new DisTube(client, {
+  ffmpeg: { path: ffmpeg },
+  plugins: [new SpotifyPlugin(), new YtDlpPlugin({
+    update: false,
+    ytdlOptions: {
+      cookies: 'cookies.txt'
+    }})]
+});
+client.distube.on('error', (error) => {
+  console.error('Erro no distube:', error.message);
 });
 
 // Coleção de comandos
@@ -44,5 +60,3 @@ client.once('ready', () => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
-
-//teste de commit
