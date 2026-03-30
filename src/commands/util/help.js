@@ -13,6 +13,6 @@ module.exports = {
                           .setTitle('Comandos')
                           .setColor('#ffffff')
                           .setDescription(lista)
-            await interaction.reply({embeds: [embed]});
+            await interaction.reply({embeds: [embed], ephemeral: true});
           }
 }
