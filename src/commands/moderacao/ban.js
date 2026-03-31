@@ -5,7 +5,7 @@ module.exports = {
         .setName('ban')
         .setDescription('Bane um usuário do servidor')
         .addUserOption(opt =>
-         opt.setName('usuario')
+         opt.setName('usuário')
             .setDescription('Quem banir')
             .setRequired(true))
         .addStringOption(opt =>
@@ -16,25 +16,33 @@ module.exports = {
     async execute(interaction){
         if(!interaction.guild){
             return interaction.reply({
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comando devidamente!',
+                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!',
                 ephemeral: true,
             });
         }
 
-        const targetUser = interaction.options.getUser('usuario');
-        const reason = interaction.options.getString('motivo') ?? 'Sem motivo';
+        const user = interaction.options.getUser('usuário');
+        const member = await interaction.guild.members.fetch(user.id).catch(() => null);
+        const reason = interaction.options.getString('motivo') ?? 'Não definido';
+
+        if(!member){
+            return interaction.reply({
+                content: 'Esse usuário não está no servidor.',
+                ephemeral: true,
+            });
+        }
 
         try{
             //bane o usuario do servidor
-            await interaction.guild.members.ban(targetUser, { reason: reason });
+            await member.ban(user, { reason: reason });
 
             await interaction.reply({
-                content: `${targetUser.username} foi banido. Motivo: ${reason}`,
+                content: `${member} foi banido.  Motivo: ${reason}.`,
                 ephemeral: false,
             });
         } catch (error){
             await interaction.reply({
-                content: 'Não foi possível banir esse usuário.  Verifique se o cargo do bot é superior ao cargo do usuário.',
+                content: 'Não foi possível banir este usuário.  Verifique se o cargo do bot é superior ao cargo do usuário.',
                 ephemeral: true,
             });
         }
