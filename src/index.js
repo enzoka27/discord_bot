@@ -27,8 +27,16 @@ client.distube = new DisTube(client, {
       cookies: 'cookies.txt'
     }})]
 });
-client.distube.on('error', (error) => {
+
+client.distube.on('error', (error, queue) => {
   console.error('Erro no distube:', error.message);
+  if (error.errorCode == 'YTDLP_ERROR' && error.message.includes('age')){
+    console.log('queue:', queue)
+    if (queue == null){
+      return;
+    }
+    queue.textChannel.send('Este vídeo tem restrição de idade e não pode ser tocado!');
+  }
 });
 
 client.distube.on('finishSong', (_, song) => {

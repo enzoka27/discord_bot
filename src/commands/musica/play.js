@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 require('dotenv').config();
 
@@ -10,7 +11,7 @@ module.exports = {
         .setDescription('Coloque o link da música aqui!')
         .setRequired(true)),
 
-        async execute(interaction) { 
+        async execute(interaction) {  
           const music = interaction.options.getString('busca'); //resposta do usuário
           if (!interaction.member.voice.channel){ //usuário não está em um canal de voz
             await interaction.reply({content: 'Você não está em um canal de voz!', ephemeral: true});
@@ -31,14 +32,21 @@ module.exports = {
 
             let in_fila = await interaction.client.distube.getQueue(interaction.guild)
             await interaction.deferReply();
-            await interaction.client.distube.play(interaction.member.voice.channel, url);
+            await interaction.client.distube.play(interaction.member.voice.channel, url); //toca música
             const queue = interaction.client.distube.getQueue(interaction.guild);
-
+            const actual_song = queue.songs[0];
+            const thumb = actual_song.thumbnail;
+            const title = actual_song.name;
+            const embed = new EmbedBuilder()
+                          .setColor('#ffffff')
+                          .setThumbnail(thumb)
+                          .setTitle(`Tocando: ${title}`)
+                          .setDescription(url);
             if (in_fila){ //adiciona música na fila
               await interaction.editReply({content: `Adicionada à fila! ${queue.songs.length-1} músicas adiante!`});
             }
             else{ //toca música (zero fila)
-              await interaction.editReply({content: 'Tocando música!'});
+              await interaction.editReply({embeds: [embed]});
             }
   }
 }
