@@ -1,4 +1,5 @@
 require('dotenv').config();
+const state = require('./state.js');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -28,6 +29,10 @@ client.distube = new DisTube(client, {
 });
 client.distube.on('error', (error) => {
   console.error('Erro no distube:', error.message);
+});
+
+client.distube.on('finishSong', (_, song) => {
+  state.last_song = song;
 });
 
 // Coleção de comandos

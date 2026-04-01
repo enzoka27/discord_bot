@@ -1,55 +1,54 @@
-const { SlashCommandBuilder } = require('discord.js'); //importa o metodo slash... da biblioteca discordjs
-require('dotenv').config();
+const { SlashCommandBuilder } = require('discord.js');
 const axios = require('axios');
+require('dotenv').config();
 
-module.exports = { //metodo embutido do nodejs que permite enviar dados pra outro arquivo com require
-  data: new SlashCommandBuilder() //utiliza o metodo slashcb e define suas configurações dentro do método
+module.exports = {
+  data: new SlashCommandBuilder()
         .setName('play')
         .setDescription('Roda músicas ou vídeos por link do youtube')
-        .addStringOption(option=> option.setName('busca').setDescription('Coloque o link da música aqui!').setRequired(true)),
+        .addStringOption(option=> option.setName('busca')
+        .setDescription('Coloque o link da música aqui!')
+        .setRequired(true)),
+
         async execute(interaction) { 
           const music = interaction.options.getString('busca'); //resposta do usuário
-          if (!interaction.member.voice.channel){
-            //usuário não está em um canal de voz
+          if (!interaction.member.voice.channel){ //usuário não está em um canal de voz
             await interaction.reply({content: 'Você não está em um canal de voz!', ephemeral: true});
-            //mensagem de erro
             return;
           }
+
           const url = await fetch_music(music);
-          if (url == 'INVALID_LINK') { 
-              await interaction.reply({content: 'Link inválido!', ephemeral: true});
-              return;
-            }
-          if (url == 'NOT_FOUND'){
-            await interaction.reply({content: 'Música não encontrada!', ephemeral: true});
+          const api_responses = { //armazena possíveis erros do fetch_music
+            'INVALID_LINK': 'Link inválido!',
+            'NOT_FOUND': 'Música não encontrada!',
+            'LIMIT_REACHED': 'Limite de requisições atingido!',
+            'API_ERROR': 'Erro ao buscar música!'
+          }
+          if (url in api_responses){ //retorna erros da api
+            await interaction.reply({content: api_responses[url], ephemeral: true});
             return;
           }
-          if (url == 'LIMIT_REACHED'){
-            await interaction.reply({content: 'Limite de requisições atingido!', ephemeral: true});
-            return;
-          }
-          if (url == 'API_ERROR'){
-            await interaction.reply({content: 'Erro ao buscar música!', ephemeral: true});
-            return;
-          }
+
             let in_fila = await interaction.client.distube.getQueue(interaction.guild)
             await interaction.deferReply();
             await interaction.client.distube.play(interaction.member.voice.channel, url);
             const queue = interaction.client.distube.getQueue(interaction.guild);
-            if (in_fila){
+
+            if (in_fila){ //adiciona música na fila
               await interaction.editReply({content: `Adicionada à fila! ${queue.songs.length-1} músicas adiante!`});
             }
-            else{
+            else{ //toca música (zero fila)
               await interaction.editReply({content: 'Tocando música!'});
             }
   }
 }
+
 function validate_link(link){ //valida o formato do link do youtube
   const link_pattern = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/;
   return link_pattern.test(link);
-  }
+}
 
-async function fetch_music(music) {
+async function fetch_music(music) { //busca música no youtube e retorna o link completo
   if (music.includes('spotify.com')) {
   return music;
 }
