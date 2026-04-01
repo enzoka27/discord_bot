@@ -7,13 +7,13 @@ module.exports = { //exporta como modulo para facil leitura para o bot
         .setName('mute')
         .setDescription('Silencia um usuário temporariamente') 
         .addUserOption(opt => 
-         opt.setName('usuario') 
+         opt.setName('usuário') 
             .setDescription('Quem silenciar') 
             .setRequired(true))
         //add uma opção de usuários, onde vai mostrar uma seleção de membros, é OBRIGATÓRIO mostrar(.setRequired(true))
         .addIntegerOption(opt => 
-         opt.setName('duracao') 
-            .setDescription('Duração em minutos') 
+         opt.setName('duração')
+            .setDescription('Duração em minutos')
             .setRequired(true))
         //add uma opção numérica inteira, para a duração em minutos, tbm OBRIGATÓRIO
         .addStringOption(opt => 
@@ -26,25 +26,32 @@ module.exports = { //exporta como modulo para facil leitura para o bot
     async execute(interation){ //função assíncrona chamada quando alguem usa o /mute.  
         if(!interation.guild){
             return interation.reply({ 
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comando devidamente!', 
+                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!', 
                 ephemeral: true
             });
         }//garante que o comando só funciona em servidores 
 
-        const targetUser = interation.options.getUser('usuario'); //pega usuario( getUser ) que foi selecionado na opção (addUserOption) 
-        const member = await interation.guild.members.fetch(targetUser.id);
+        const user = interation.options.getUser('usuário'); //pega usuario( getUser ) que foi selecionado na opção (addUserOption) 
+        const member = await interation.guild.members.fetch(user.id).catch(() => null);
         //extrai ID do usuario( .id ) e busca o membro do servidor pelo ID usando fetch, para pegar diretamente da API do dc
         //isso é necessário porque .timeout() só existe no objeto member, não no user 
-        const duration = interation.options.getInteger('duracao');
-        //pega o número inteiro digitado na opção duracao
-        const reason = interation.options.getString('motivo') ?? 'Sem motivo';
+        const duration = interation.options.getInteger('duração');
+        //pega o número inteiro digitado na opção duração
+        const reason = interation.options.getString('motivo') ?? 'Não definido';
         //pega o txt da opção motivo, se não foi preenchida, usa 'Sem motivo' como padrão (operador ?? = nullish coalescing)
+
+        if(!member){
+            return interaction.reply({
+                content: 'Esse usuário não está no servidor.',
+                ephemeral: true,
+            });
+        }
 
         try{
             await member.timeout(duration * 60 * 1000, reason);
             //aplica o timeout no membro, a conta converte minutos para miliseg, pois o dc exige o tempo nesse formato
             await interation.reply({ 
-                content: `${member.user.tag} foi silenciado por ${duration} min.  Motivo: ${reason}`, 
+                content: `${member} foi silenciado por ${duration} min.  Motivo: ${reason}.`, 
                 ephemeral: false 
             });//responde confirmando o mute. Usa member.user.tag (e não usuario.tag diretamente) porque o objeto é o member, então é preciso acessar o .user dentro dele   
         } catch (error){

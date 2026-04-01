@@ -5,7 +5,7 @@ module.exports = {
         .setName('kick')
         .setDescription('Expulsa um usuário do servidor')
         .addUserOption(opt =>
-         opt.setName('usuario')
+         opt.setName('usuário')
             .setDescription('Quem expulsar')
             .setRequired(true))
         .addStringOption(opt =>
@@ -16,15 +16,15 @@ module.exports = {
     async execute(interaction){
         if(!interaction.guild){
             return interaction.reply({
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comando devidamente!',
+                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!',
                 ephemeral: true,
             });
         }
 
-        const targetUser = interaction.options.getUser('usuario');
-        const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+        const user = interaction.options.getUser('usuário');
+        const member = await interaction.guild.members.fetch(user.id).catch(() => null);
         //.catch(() => null) -> se o .fetch() der erro, em vez de travar o bot, ele captura o erro silenciosamente e retorna null
-        const reason = interaction.options.getString('motivo') ?? 'Sem motivo';
+        const reason = interaction.options.getString('motivo') ?? 'Não definido';
 
         //verifica se o membro esta no servidor
         if(!member){
@@ -39,12 +39,12 @@ module.exports = {
             await member.kick(reason);
 
             await interaction.reply({
-                content: `${targetUser.username} foi expulso.  Motivo: ${reason}`,
+                content: `${member} foi expulso.  Motivo: ${reason}.`,
                 ephemeral: false,
             });
         } catch (error){
             await interaction.reply({
-                content: 'Não foi possível expulsar esse usuário.  Verifique se o cargo do bot é superior ao cargo do usuário.',
+                content: 'Não foi possível expulsar este usuário.  Verifique se o cargo do bot é superior ao cargo do usuário.',
                 ephemeral: true,
             });
         }

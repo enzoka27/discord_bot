@@ -16,7 +16,7 @@ module.exports = {
     async execute(interaction){
         if(!interaction.guild){
             return interaction.reply({ 
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comando devidamente!',
+                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!',
                 ephemeral: true,
             });
         }

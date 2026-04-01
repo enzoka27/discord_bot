@@ -17,17 +17,17 @@ module.exports = {
     async execute(interaction){
         if(!interaction.guild){
             return interaction.reply({
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comando devidamente!',
+                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!',
                 ephemeral: true,
             });
         }
 
-        const id = interaction.options.getString('id');
-        const reason = interaction.options.getString('motivo') ?? 'Sem motivo';
+        const userID = interaction.options.getString('id');
+        const reason = interaction.options.getString('motivo') ?? 'Não definido';
 
         try{
             //verifica se o usuario realmente esta banido
-            const banned = await interaction.guild.bans.fetch(id).catch(() => null);
+            const banned = await interaction.guild.bans.fetch(userID).catch(() => null);
             //.catch(() => null) -> se o .fetch() der erro, em vez de travar o bot, ele captura o erro silenciosamente e retorna null
 
             if(!banned){
@@ -38,15 +38,15 @@ module.exports = {
             }
 
             //remove o ban
-            await interaction.guild.members.unban(id, reason);
+            await interaction.guild.members.unban(userID, reason);
 
             await interaction.reply({
-                content: `${banned.user.username} foi desbanido.  Motivo: ${reason}`,
+                content: `<@${userID}> foi desbanido.  Motivo: ${reason}.`,
                 ephemeral: false,
             });
         } catch (error){
             await interaction.reply({
-                content: 'Não foi possível desbanir esse usuário.  Verifique se o ID está correto.',
+                content: 'Não foi possível desbanir este usuário.  Verifique se o ID está correto.',
                 ephemeral: true,
             });
         }
