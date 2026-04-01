@@ -84,7 +84,7 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
                     .setStyle(TextInputStyle.Short) // estilo do input
                     .setRequired(true) // define que é obrigatorio digitar algo
     
-            linha_input = new ActionRowBuilder().addComponents(input) // clima uma linha com o input
+            linha_input = new ActionRowBuilder().addComponents(input) // cria uma linha com o input
                     
             modal = new ModalBuilder() // cria um modal (um pop-up que aparece ao apertar o botao, para o usario digitar nova cidade)
                 .setCustomId('nova_cidade') // id do modal
