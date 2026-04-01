@@ -22,20 +22,16 @@ const client = new Client({
 client.distube = new DisTube(client, {
   ffmpeg: { path: ffmpeg },
   plugins: [new SpotifyPlugin(), new YtDlpPlugin({
-    update: false,
-    ytdlOptions: {
-      cookies: 'cookies.txt'
-    }})]
+    update: false
+  })]
 });
 
-client.distube.on('error', (error, queue) => {
+client.distube.on('error', (error, queue, song) => {
   console.error('Erro no distube:', error.message);
   if (error.errorCode == 'YTDLP_ERROR' && error.message.includes('age')){
-    console.log('queue:', queue)
-    if (queue == null){
-      return;
+    if (queue && queue.textChannel){
+      queue.textChannel.send('Este vídeo tem restrição de idade e não pode ser tocado!');
     }
-    queue.textChannel.send('Este vídeo tem restrição de idade e não pode ser tocado!');
   }
 });
 

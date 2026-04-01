@@ -8,13 +8,7 @@ module.exports = {
     try {
       await comando.execute(interaction);
     } catch (erro) {
-      console.error(erro);
-      if (interaction.deferred) {
-        await interaction.editReply({ content: '❌ Erro ao executar o comando.' });
-      } 
-      else {
-        await interaction.reply({ content: '❌ Erro ao executar o comando.', ephemeral: true });
-}
+      console.log('TESTE ERRO:' + erro);    
     }
   }
 };
