@@ -42,9 +42,12 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
                     .setTitle('Informações do filme')  //escolhe o titulo do filme
                     .addFields(
                         {name: 'Título do Filme', value: `${filme_dados.Title}`}, // informaões que vão ter dentro do card
-                        {name: 'Sinopse', value: filme_dados.Plot !== 'N/A' ? filme_dados.Plot : 'Sinopse Indisponível'}, // caso venha sem sinopse, ele mostra 'Sinopse Indisponível', para não mostrar 'N/A'
-                        {name: 'Nota', value: `${filme_dados.imdbRating}`},
-                        {name: 'Data de lançamento', value: `${filme_dados.Released}`},    
+                        {name: 'Gênero', value: filme_dados.Genre !== 'N/A' ? filme_dados.Genre : 'Indisponível'},
+                        {name: 'Duração', value: filme_dados.Runtime !== 'N/A' ? filme_dados.Runtime : 'Indisponível'},
+                        {name: 'Diretor', value: filme_dados.Director !== 'N/A' ? filme_dados.Director : 'Indisponível'},
+                        {name: 'Sinopse', value: filme_dados.Plot !== 'N/A' ? filme_dados.Plot : 'Indisponível'}, // caso venha sem sinopse, ele mostra 'Sinopse Indisponível', para não mostrar 'N/A'
+                        {name: 'Nota', value: filme_dados.imdbRating !== 'N/A' ? filme_dados.imdbRating : 'Indisponível'},
+                        {name: 'Data de lançamento', value: filme_dados.Released !== 'N/A' ? filme_dados.Released : 'Indisponível'},    
                     )
                     .setImage(filme_dados.Poster !== 'N/A' ? filme_dados.Poster : null) // caso venha sem foto ele não mostra nada, para não mostrar 'N/A'
 
@@ -85,15 +88,18 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
 
                     submit = await clique.awaitModalSubmit({time: 15000}) // espera o usuario responder o modal por 15 segundos antes de dar erro
 
+                    await submit.deferUpdate()
+
                     await InfoFilme(submit.fields.getTextInputValue('input_novo_filme')) // chama a função com o novo filme digitada pelo usuario como parametro
 
-                    await submit.update({ content: '' , embeds: [embed] , components: [linha_botao]}) // mostra o novo card, com o botao (tira o content, para caso tenha mensagem de erro antiga)
+                    await interaction.editReply({ content: '' , embeds: [embed] , components: [linha_botao]}) // mostra o novo card, com o botao (tira o content, para caso tenha mensagem de erro antiga)
 
                     houveErro = false// atualiza o houve erro para false
 
                 } catch (erro) {
                     if (submit && erro.message === 'Filme não encontrado') { // se for erro de filme não encontrado
-                        await submit.update({content: '❌ Filme não encontrado! Verifique o nome e tente novamente.', embeds: [], components: [linha_botao]}) // mostra 'filme não encontrado', sem o embed antigo, mas com o botao(continua ativo para o usario digitar novo filme, volta pro inicio do loop)
+                        await interaction.editReply({content: '❌ Filme não encontrado! Verifique o nome e tente novamente.', embeds: [], components: [linha_botao]}) // mostra 'filme não encontrado', sem o embed antigo, mas com o botao(continua ativo para o usario digitar novo filme, volta pro inicio do loop)
+                        houveErro = true
                     } else {
                         throw(erro) // se for outro erro ele joga o erro para o catch do final
                     }

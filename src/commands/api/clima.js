@@ -101,15 +101,17 @@ module.exports = { //exporta o "data" e "execute", para ser usado em outros arqu
 
                     submit = await clique.awaitModalSubmit({time: 15000}) // espera o usuario responder o modal por 15 segundos antes de dar erro
 
+                    await submit.deferUpdate()
+
                     await mostrarClima(submit.fields.getTextInputValue('input_nova_cidade')) // chama a função com a nova cidade digitada pelo usuario como parametro
 
-                    await submit.update({ content: '' , embeds: [embed] , components: [linha_botao]}) // mostra o novo card, com o botao (tira o content, para caso tenha mensagem de erro antiga)
+                    await interaction.editReply({ content: '' , embeds: [embed] , components: [linha_botao]}) // mostra o novo card, com o botao (tira o content, para caso tenha mensagem de erro antiga)
 
                     houveErro = false // atualiza o houve erro para false
 
                 } catch (erro){ // se de erro
                     if (erro.response && erro.response.status === 404){ // se for erro de cidade invalida
-                        await submit.update( {content: '❌ Cidade não encontrada! Verifique o nome e tente novamente.', embeds: [], components: [linha_botao]}) // mostra 'cidade invalida', sem o embed antigo, mas com o botao(continua ativo para o usario digitar nova ciadade, volta pro inicio do loop)
+                        await interaction.editReply( {content: '❌ Cidade não encontrada! Verifique o nome e tente novamente.', embeds: [], components: [linha_botao]}) // mostra 'cidade invalida', sem o embed antigo, mas com o botao(continua ativo para o usario digitar nova ciadade, volta pro inicio do loop)
                         houveErro = true // atualiza houve erro para true
                     } else {
                         throw(erro) // se for outro erro ele joga o erro para o catch do final
