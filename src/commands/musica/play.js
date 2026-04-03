@@ -35,7 +35,6 @@ module.exports = {
     };
     if (url in api_responses) {
       //retorna erros da api
-      console.log('url response fetch_music: ' + url);
       await interaction.reply({ content: api_responses[url], ephemeral: true });
       return;
     }
