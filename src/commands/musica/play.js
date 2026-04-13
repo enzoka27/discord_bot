@@ -1,6 +1,6 @@
 /**
  * Music Player - Play Command Module
- * Plays music from YouTube or Spotify
+ * Plays music from YouTube
  * Supports direct links and search queries
  * Uses DisTube for music playback management
  */
