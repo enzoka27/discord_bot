@@ -1,3 +1,9 @@
+/**
+ * Weather Command Module
+ * Fetches current weather information for a specified city
+ * Uses OpenWeatherMap API for real-time weather data
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
@@ -7,32 +13,31 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-} = require("discord.js"); // importa componentes da biblioteca 'discord.js'
-const axios = require("axios"); //importa a biblioteca axios
+} = require("discord.js");
+const axios = require("axios");
 
 module.exports = {
-  //exporta o "data" e "execute", para ser usado em outros arquivos(como o index.js)
-
-  data: new SlashCommandBuilder() //cria um novo comando e exporta ele para 'deploy-commands.js'
-    .setName("clima") //escolhe o nome do comando(que vai ser o que o usuario terá que digitar para usa-lo)
-    .setDescription("Mostra informações do clima de uma cidade") //escolhe a descrição(vai aparecer em baixo do nome)
+  // Command definition for Discord slash commands
+  data: new SlashCommandBuilder()
+    .setName("weather")
+    .setDescription("Shows weather information for a city")
     .addStringOption(
       (option) =>
-        option // coloca opçao de escrever algo (obrigatorio nesse caso)
-          .setName("cidade") // define o nome da opção
-          .setDescription(
-            "Digite o nome da cidade à qual será mostrado o clima",
-          ) // define sua descrição
-          .setRequired(true), // define que é obrigatoria prencher ela
+        option
+          .setName("city")
+          .setDescription("Enter the city name to display weather")
+          .setRequired(true),
     ),
 
+  /**
+   * Execute weather command
+   * @param {Interaction} interaction - Discord interaction object
+   */
   async execute(interaction) {
-    // executa uma interação async (assincrona, ou seja, pode ter wait no meio e continuar rodando) e exporta tudo dentro dele para 'deplou-commands.js'
+    await interaction.deferReply();
 
-    await interaction.deferReply(); // espera até pegar a api
-
+    // Weather emoji mapping
     const emojis = {
-      //criando object com os emojis que variam conforme o clima
       Clear: "☀️",
       Clouds: "☁️",
       Rain: "🌧️",
@@ -49,156 +54,161 @@ module.exports = {
       Squall: "💨",
       Tornado: "🌪️",
     };
+
     let embed;
     let input;
-    let linha_botao;
-    let linha_input; // definindo variaveis
+    let button_row;
+    let input_row;
     let modal;
-    let botao;
+    let button;
     let submit;
-    let houveErro = false;
+    let had_error = false;
 
     try {
-      //tenta pegar a opçao digita pelo usuario em 'cidade'
+      /**
+       * Fetch and display weather data for a city
+       * @param {string} city - City name to fetch weather for
+       */
+      async function display_weather(city) {
+        // Fetch weather data from OpenWeatherMap API
+        const response = await axios.get(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.WEATHER_KEY}&units=metric&lang=en`,
+        );
+        const weather_data = response.data;
 
-      async function mostrarClima(cidade) {
-        // cria a função mostrarClima com a cidade como parametro
-
-        const resposta = await axios.get(
-          `https://api.openweathermap.org/data/2.5/weather?q=${cidade}&appid=${process.env.WEATHER_KEY}&units=metric&lang=pt_br`,
-        ); // request na API
-        const clima = resposta.data; // coloca as informações do request da API, na variavel clima
-
-        const corAleatoria = Math.floor(Math.random() * 0xffffff); //cria variavel corAleatoria, com calculo para escolher um hexadecimal de cor aleatorio, para colocar a cor do card
-        embed = new EmbedBuilder() //cria novo card
-          .setColor(corAleatoria) // escolhe a cor do card (nesse caso, aleatoria)
-          .setTitle("Informações de Clima") //escolhe o titulo do clima
+        // Generate random color for embed
+        const random_color = Math.floor(Math.random() * 0xffffff);
+        
+        // Create weather information embed
+        embed = new EmbedBuilder()
+          .setColor(random_color)
+          .setTitle("Weather Information")
           .setThumbnail(
-            `https://openweathermap.org/img/wn/${clima.weather[0].icon}@2x.png`,
-          ) // coloca uma imagem no canto superior direito (nesse caso é o icon do clima atual)
+            `https://openweathermap.org/img/wn/${weather_data.weather[0].icon}@2x.png`,
+          )
           .addFields(
-            //adiciona fields no card (seria um campo, para mostrar algo digitado)
-            { name: "🌍 Local", value: `${clima.name}, ${clima.sys.country} ` }, // informaões que vão ter dentro do card
+            { name: "🌍 Location", value: `${weather_data.name}, ${weather_data.sys.country}` },
             {
-              name: `${emojis[clima.weather[0].main] || "🌡️"} Clima`,
-              value: `${clima.weather[0].description.charAt(0).toUpperCase() + clima.weather[0].description.slice(1)}`,
-            }, // aqui ele coloca o emoji de acord com clima, e da capitalize no clima dado pela API
-            {
-              name: "🌡️ Temperatura",
-              value: `${clima.main.temp.toFixed(1)}°C`,
+              name: `${emojis[weather_data.weather[0].main] || "🌡️"} Condition`,
+              value: `${weather_data.weather[0].description.charAt(0).toUpperCase() + weather_data.weather[0].description.slice(1)}`,
             },
             {
-              name: "🤔 Sensação Térmica",
-              value: `${clima.main.feels_like.toFixed(1)}°C`,
+              name: "🌡️ Temperature",
+              value: `${weather_data.main.temp.toFixed(1)}°C`,
             },
-            { name: "💧 Umidade", value: `${clima.main.humidity}%` },
             {
-              name: "💨 Velocidade do vento",
-              value: `${clima.wind.speed} m/s`,
+              name: "🤔 Feels Like",
+              value: `${weather_data.main.feels_like.toFixed(1)}°C`,
+            },
+            { name: "💧 Humidity", value: `${weather_data.main.humidity}%` },
+            {
+              name: "💨 Wind Speed",
+              value: `${weather_data.wind.speed} m/s`,
             },
           );
 
-        botao = new ButtonBuilder() // cria um botão para procurar clima de nova cidade
-          .setCustomId("botao_novo_clima") // id do botao
-          .setLabel("🔍 Buscar nova cidade") // nome que vai aparecer em cima do botao
-          .setStyle(ButtonStyle.Primary); // estilo do botao
+        // Create button to search for another city
+        button = new ButtonBuilder()
+          .setCustomId("button_new_weather")
+          .setLabel("🔍 Search another city")
+          .setStyle(ButtonStyle.Primary);
 
-        linha_botao = new ActionRowBuilder().addComponents(botao); //adiciona uma linha com o botao embaixo do card
+        button_row = new ActionRowBuilder().addComponents(button);
       }
 
-      const cidade = interaction.options.getString("cidade"); // pega oque foi digitado pelo usuario na opção 'cidade' e guarda na variavel cidade
-      await mostrarClima(cidade); // chama a função e coloca oque o usario digitou como parametro
+      // Get city name from user input
+      const city = interaction.options.getString("city");
+      await display_weather(city);
 
       await interaction.editReply({
         embeds: [embed],
-        components: [linha_botao],
-      }); // mostrar o card com as informaões do cliam da cidade e o botao
+        components: [button_row],
+      });
 
-      input = new TextInputBuilder() // cria nova area para usuario digitar
-        .setCustomId("input_nova_cidade") // id do input
-        .setLabel("Digite o nome da cidade") // o que vai aparecer em cima de onde o usario digita
-        .setStyle(TextInputStyle.Short) // estilo do input
-        .setRequired(true); // define que é obrigatorio digitar algo
+      // Create text input for new city search
+      input = new TextInputBuilder()
+        .setCustomId("input_new_city")
+        .setLabel("Enter city name")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
 
-      linha_input = new ActionRowBuilder().addComponents(input); // cria uma linha com o input
+      input_row = new ActionRowBuilder().addComponents(input);
 
-      modal = new ModalBuilder() // cria um modal (um pop-up que aparece ao apertar o botao, para o usario digitar nova cidade)
-        .setCustomId("nova_cidade") // id do modal
-        .setTitle("Buscar nova cidade") // titulo do modal
-        .addComponents(linha_input); // adicona a linha com o input
+      // Create modal popup for city search
+      modal = new ModalBuilder()
+        .setCustomId("new_city")
+        .setTitle("Search for a new city")
+        .addComponents(input_row);
 
+      // Main interaction loop
       while (true) {
-        // para sempre (até o usario nao clicar no botao em 30s ou nao mandar nada no modal em 15s)
         try {
-          // tenta pegar a cidade digitada no modal e atualizar o card
-          const mensagem = await interaction.fetchReply(); // pega a mensagem(card) enviado anteriormente
+          const message = await interaction.fetchReply();
 
-          const clique = await mensagem.awaitMessageComponent({ time: 30000 }); // espera o usuario interagir com algum compontente(nesse caso o botao) por 30 segundos antes de dar erro
+          // Wait for button click (30 second timeout)
+          const button_click = await message.awaitMessageComponent({ time: 30000 });
 
-          await clique.showModal(modal); // quando receber o clique, ele mostra o modal
+          // Show modal for city input
+          await button_click.showModal(modal);
 
-          submit = await clique.awaitModalSubmit({ time: 15000 }); // espera o usuario responder o modal por 15 segundos antes de dar erro
+          // Wait for modal submission (15 second timeout)
+          submit = await button_click.awaitModalSubmit({ time: 15000 });
 
           await submit.deferUpdate();
 
-          await mostrarClima(
-            submit.fields.getTextInputValue("input_nova_cidade"),
-          ); // chama a função com a nova cidade digitada pelo usuario como parametro
+          // Fetch weather for the new city
+          await display_weather(
+            submit.fields.getTextInputValue("input_new_city"),
+          );
 
           await interaction.editReply({
             content: "",
             embeds: [embed],
-            components: [linha_botao],
-          }); // mostra o novo card, com o botao (tira o content, para caso tenha mensagem de erro antiga)
+            components: [button_row],
+          });
 
-          houveErro = false; // atualiza o houve erro para false
-        } catch (erro) {
-          // se de erro
-          if (erro.response && erro.response.status === 404) {
-            // se for erro de cidade invalida
+          had_error = false;
+        } catch (error) {
+          // Handle invalid city error
+          if (error.response && error.response.status === 404) {
             await interaction.editReply({
               content:
-                "❌ Cidade não encontrada! Verifique o nome e tente novamente.",
+                "❌ City not found! Check the name and try again.",
               embeds: [],
-              components: [linha_botao],
-            }); // mostra 'cidade invalida', sem o embed antigo, mas com o botao(continua ativo para o usario digitar nova ciadade, volta pro inicio do loop)
-            houveErro = true; // atualiza houve erro para true
+              components: [button_row],
+            });
+            had_error = true;
           } else {
-            throw erro; // se for outro erro ele joga o erro para o catch do final
+            throw error;
           }
         }
       }
-    } catch (erro) {
-      // se der erro:
-
-      if (erro.response && erro.response.status === 404) {
-        // se for erro de cidade invalida
+    } catch (error) {
+      // Handle errors
+      if (error.response && error.response.status === 404) {
         await interaction.editReply(
-          "❌ Cidade não encontrada! Verifique o nome e tente novamente.",
-        ); // mostra 'cidade invalida', e usuario tem que usar novo comando (apenas se for a primeira interação)
-      } else if (erro.code === "InteractionCollectorError") {
-        // se for erro de ter ultrapassado o tempo limite de espera de interação
-        botao.setDisabled(true); //desativa o botao
-        linha_botao = new ActionRowBuilder().addComponents(botao); //atualiza o botao na linha(com ele agora desativado)
-        if (houveErro) {
-          // se teve erro na ultima mensagem atualizada
+          "❌ City not found! Check the name and try again.",
+        );
+      } else if (error.code === "InteractionCollectorError") {
+        // Disable button after timeout
+        button.setDisabled(true);
+        button_row = new ActionRowBuilder().addComponents(button);
+        if (had_error) {
           await interaction.editReply({
             embeds: [],
-            components: [linha_botao],
-          }); //mostra a mensagem com o botao desativado, e sem o embed, e com a mensagem de erro
+            components: [button_row],
+          });
         } else {
-          // se nao houve erro na ultima mensagem atualizada
           await interaction.editReply({
             embeds: [embed],
-            components: [linha_botao],
-          }); //mostra a mensagem com o botao desativado, e com o embed
+            components: [button_row],
+          });
         }
       } else {
-        // se for qualquer outro erro
+        console.error(error);
         await interaction.editReply(
-          "😵 Algo deu errado ao buscar o clima. Tente novamente!",
-        ); // no discord mostra que deu erro ao tentar pegar a opçao de cidade
-        console.error(erro); // mostrar qual é o erro (no terminal)
+          "😵 An error occurred while fetching weather. Please try again!",
+        );
       }
     }
   },

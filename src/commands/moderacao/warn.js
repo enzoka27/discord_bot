@@ -1,76 +1,90 @@
+/**
+ * Warn Command Module
+ * Issues a warning to a user with optional DM notification
+ * Stores warnings in memory (resets on bot restart)
+ * Requires Moderate Members permission
+ */
+
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
-//cria um "dicionário" em memória para guardar os avisos. um Map é como uma tabela. 
-const warnings = new Map(); //(reseta quando o bot reinicia)
+// In-memory storage for user warnings (persists across commands but resets on bot restart)
+const warnings = new Map();
 
 module.exports = {
-    warnings, //exporta o Map para que outros arquivos possam acessar o mesmo objeto
+    // Export warnings map for use in other modules (like viewWarn command)
+    warnings,
+    
+    // Command definition with permission requirements
     data: new SlashCommandBuilder()
         .setName('warn')
-        .setDescription('Avisa um usuário do servidor')
-        //opção obrigatória: qual usuário avisar
+        .setDescription('Warns a server member')
         .addUserOption(opt => 
-         opt.setName('usuário')
-            .setDescription('Quem avisar')
+         opt.setName('user')
+            .setDescription('User to warn')
             .setRequired(true))
-        //opção obrigatória: motivo do aviso
         .addStringOption(opt => 
-         opt.setName('motivo')
-            .setDescription('Motivo do aviso')
+         opt.setName('reason')
+            .setDescription('Reason for warning')
             .setRequired(true))
-        //só quem pode punir membros pode usar o comando
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
+    /**
+     * Execute warn command
+     * @param {Interaction} interaction - Discord interaction object
+     */
     async execute(interaction){
+        // Verify command is used in a server context
         if(!interaction.guild){
             return interaction.reply({ 
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!', 
+                content: 'This command can only be used in servers. Add me to a server to use it!', 
                 ephemeral: true,
             });
         }
 
-        //pega o usuario alvo e o motivo das opções do comando
-        const user = interaction.options.getUser('usuário');
-        const reason = interaction.options.getString('motivo');
+        // Fetch target user and warning reason
+        const user = interaction.options.getUser('user');
+        const reason = interaction.options.getString('reason');
 
-        //cria uma chave unica por usuario por servidor
+        // Create unique key per user per server
         const key = `${interaction.guild.id}-${user.id}`;
 
-        //se o usuario ainda n tem avisos, cria uma lista vazia para ele
+        // Initialize empty warning array if user has no prior warnings
         if(!warnings.has(key)){
             warnings.set(key, []);
         }
 
-        //add o aviso na lista do usuario com motivo, data e quem aplicou
+        // Add warning to user's record with timestamp and issuer
         warnings.get(key).push({
             reason,
-            data: new Date().toLocaleString('pt-BR'),
-            aplicadoPor: interaction.user.tag
+            date: new Date().toLocaleString('pt-BR'),
+            issued_by: interaction.user.tag
         });
 
-        //pega o total de avisos do usuario
+        // Get total warning count
         const totalWarnings = warnings.get(key).length;
 
-        dmStatus = ''; //guarda o status do envio da dm
+        // Initialize DM status message
+        let dmStatus = '';
 
         try{
-            //tenta enviar uma dm avisando o usuario
-            await user.send(`Você recebeu um aviso em **${interaction.guild.name}**. \nMotivo: ${reason}.`);
-            dmStatus = 'Usuário notificado por DM.'; //add o status positivo
+            // Attempt to send warning notification via DM
+            await user.send(`You received a warning in **${interaction.guild.name}**. \nReason: ${reason}.`);
+            dmStatus = 'User notified via DM.';
         } catch{
-            //se n conseguir mandar dm(user com dm fechada), ignora silenciosamente
-            dmStatus = 'Não foi possível enviar DM (DM fechada).'; //add o status negativo
+            // User has DMs disabled - silently continue
+            dmStatus = 'Could not send DM (user has DMs disabled).';
         }
 
-        //responde no canal confirmando o aviso (só o autor do comando vê)
+        // Reply with warning confirmation
         await interaction.reply({ 
-            content: `<@${user.id}> recebeu um aviso. Total de avisos: **${totalWarnings}**.  Motivo: ${reason}.`,
+            content: `<@${user.id}> received a warning. Total warnings: **${totalWarnings}**. Reason: ${reason}.`,
             ephemeral: false,
         });
 
+        // Send follow-up message with DM status
         await interaction.followUp({
             content: dmStatus,
             ephemeral: true,
-        }); //o followUp serve p/ enviar uma segunda mensagem após o reply inicial
+        });
     }
 };

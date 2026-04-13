@@ -1,39 +1,51 @@
+/**
+ * Currency Converter Command Module
+ * Converts monetary values between different currencies
+ * Uses ExchangeRate API for real-time exchange rates
+ */
+
 const {
   SlashCommandBuilder,
   EmbedBuilder,
   ActionRowBuilder,
-} = require("discord.js"); //está importando componentes da biblioteca discord.js
-const axios = require("axios"); //está importando a biblioteca axios
+} = require("discord.js");
+const axios = require("axios");
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("moeda")
-    .setDescription("Converte um valor entre duas moedas")
+    .setName("currency")
+    .setDescription("Converts currency values between different currencies")
     .addStringOption((option) =>
       option
-        .setName("origem")
-        .setDescription("Moeda de origem (ex: BRL, USD, EUR)")
+        .setName("from")
+        .setDescription("Source currency (e.g., BRL, USD, EUR)")
         .setRequired(true)
         .setAutocomplete(true),
     )
     .addStringOption((option) =>
       option
-        .setName("destino")
-        .setDescription("Moeda de destino (ex: USD, EUR, JPY)")
+        .setName("to")
+        .setDescription("Target currency (e.g., USD, EUR, JPY)")
         .setRequired(true)
         .setAutocomplete(true),
     )
     .addNumberOption((option) =>
       option
-        .setName("valor")
-        .setDescription("Valor a ser convertido (ex: 100)")
+        .setName("amount")
+        .setDescription("Amount to be converted (e.g., 100)")
         .setRequired(true),
     ),
 
+  /**
+   * Execute currency conversion command
+   * @param {Interaction} interaction - Discord interaction object
+   */
   async execute(interaction) {
+    // Defer reply to allow time for API call
     await interaction.deferReply();
 
-    const bandeiras = {
+    // Flag emoji mapping for currencies
+    const currency_flags = {
       BRL: "🇧🇷",
       USD: "🇺🇸",
       EUR: "🇪🇺",
@@ -61,62 +73,66 @@ module.exports = {
     };
 
     try {
-      const origem = interaction.options
-        .getString("origem")
+      // Get currency codes and amount from user input
+      const from_currency = interaction.options
+        .getString("from")
         .trim()
         .toUpperCase();
-      const destino = interaction.options
-        .getString("destino")
+      const to_currency = interaction.options
+        .getString("to")
         .trim()
         .toUpperCase();
-      const valor = interaction.options.getNumber("valor");
+      const convert_amount = interaction.options.getNumber("amount");
 
-      const resposta = await axios.get(
-        `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_KEY}/pair/${origem}/${destino}/${valor}`,
+      // Fetch exchange rate data from API
+      const response = await axios.get(
+        `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_KEY}/pair/${from_currency}/${to_currency}/${convert_amount}`,
       );
-      const moeda = resposta.data;
+      const exchange_data = response.data;
 
-      const moedaBaseFormatada = valor.toLocaleString("pt-BR");
-      const conversaoFormatada = moeda.conversion_result.toLocaleString(
+      // Format currency values for display
+      const formatted_from_amount = convert_amount.toLocaleString("pt-BR");
+      const formatted_conversion_amount = exchange_data.conversion_result.toLocaleString(
         "pt-BR",
         { minimumFractionDigits: 2, maximumFractionDigits: 2 },
       );
-      const taxaFormatada = moeda.conversion_rate.toLocaleString("pt-BR");
+      const formatted_exchange_rate = exchange_data.conversion_rate.toLocaleString("pt-BR");
 
-      const corAleatoria = Math.floor(Math.random() * 0xffffff); //cria variavel corAleatoria, com calculo para escolher um hexadecimal de cor aleatorio, para colocar a cor do card
+      // Generate random color for embed and create conversion display
+      const random_color = Math.floor(Math.random() * 0xffffff);
       let embed = new EmbedBuilder()
-        .setColor(corAleatoria)
-        .setTitle("💹 Conversor de Moedas")
+        .setColor(random_color)
+        .setTitle("💹 Currency Converter")
         .addFields(
           {
-            name: "💰 Conversão",
-            value: `${bandeiras[origem] || ""} ${moedaBaseFormatada} ${moeda.base_code} = ${bandeiras[destino] || ""} ${conversaoFormatada} ${moeda.target_code}`,
+            name: "💰 Conversion",
+            value: `${currency_flags[from_currency] || ""} ${formatted_from_amount} ${exchange_data.base_code} = ${currency_flags[to_currency] || ""} ${formatted_conversion_amount} ${exchange_data.target_code}`,
           },
           {
-            name: "📊 Taxa de câmbio",
-            value: `${bandeiras[origem] || ""} 1 ${moeda.base_code} = ${bandeiras[destino] || ""} ${taxaFormatada} ${moeda.target_code}`,
+            name: "📊 Exchange Rate",
+            value: `${currency_flags[from_currency] || ""} 1 ${exchange_data.base_code} = ${currency_flags[to_currency] || ""} ${formatted_exchange_rate} ${exchange_data.target_code}`,
           },
         );
 
       await interaction.editReply({ embeds: [embed] });
-    } catch (erro) {
-      if (erro.response && erro.response.status === 404) {
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
         await interaction.editReply(
-          "❌ Moeda inválida! Use siglas como BRL, USD, EUR.",
+          "❌ Invalid currency! Use codes like BRL, USD, EUR.",
         );
       } else {
         await interaction.editReply(
-          "😵 Algo deu errado ao converter. Tente novamente!",
+          "😵 Something went wrong with the conversion. Try again!",
         );
-        console.error(erro);
+        console.error(error);
       }
     }
   },
 
   async autocomplete(interaction) {
-    const digitado = interaction.options.getFocused();
+    const input = interaction.options.getFocused();
 
-    const moedas = [
+    const currencies = [
       "BRL",
       "USD",
       "EUR",
@@ -141,14 +157,14 @@ module.exports = {
       "SGD",
       "HKD", // Ásia
       "ZAR",
-    ]; // África
+    ]; // Africa
 
-    const filtradas = moedas.filter((m) =>
-      m.startsWith(digitado.toUpperCase()),
+    const filtered = currencies.filter((c) =>
+      c.startsWith(input.toUpperCase()),
     );
 
     await interaction.respond(
-      filtradas.slice(0, 10).map((m) => ({ name: m, value: m })),
+      filtered.slice(0, 10).map((c) => ({ name: c, value: c })),
     );
   },
 };

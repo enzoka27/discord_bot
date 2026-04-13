@@ -1,3 +1,10 @@
+/**
+ * Music Player - Play Command Module
+ * Plays music from YouTube or Spotify
+ * Supports direct links and search queries
+ * Uses DisTube for music playback management
+ */
+
 const { SlashCommandBuilder } = require("discord.js");
 const { EmbedBuilder } = require("discord.js");
 const axios = require("axios");
@@ -6,88 +13,107 @@ require("dotenv").config();
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("play")
-    .setDescription("Roda músicas ou vídeos por link do youtube")
+    .setDescription("Runs a search query or plays a YouTube link")
     .addStringOption((option) =>
       option
-        .setName("busca")
-        .setDescription("Coloque o link da música aqui!")
+        .setName("search")
+        .setDescription("Enter the music link here!")
         .setRequired(true),
     ),
 
+  /**
+   * Execute play command
+   * @param {Interaction} interaction - Discord interaction object
+   */
   async execute(interaction) {
-    const music = interaction.options.getString("busca"); //resposta do usuário
+    // Get music search query or link from user input
+    const music = interaction.options.getString("search");
+    
+    // Verify user is in a voice channel
     if (!interaction.member.voice.channel) {
-      //usuário não está em um canal de voz
       await interaction.reply({
-        content: "Você não está em um canal de voz!",
+        content: "You are not in a voice channel!",
         ephemeral: true,
       });
       return;
     }
 
+    // Fetch and validate music link
     const url = await fetch_music(music);
+    
+    // API error messages
     const api_responses = {
-      //armazena possíveis erros do fetch_music
-      INVALID_LINK: "Link inválido!",
-      NOT_FOUND: "Música não encontrada!",
-      LIMIT_REACHED: "Limite de requisições atingido!",
-      API_ERROR: "Erro ao buscar música!",
+      INVALID_LINK: "Invalid link!",
+      NOT_FOUND: "Music not found!",
+      LIMIT_REACHED: "API request limit reached!",
+      API_ERROR: "Error fetching music!",
     };
+    
+    // Return error if music fetch failed
     if (url in api_responses) {
-      //retorna erros da api
       await interaction.reply({ content: api_responses[url], ephemeral: true });
       return;
     }
 
-    let in_fila = await interaction.client.distube.getQueue(interaction.guild);
+    // Check if queue already exists
+    let in_queue = await interaction.client.distube.getQueue(interaction.guild);
     await interaction.deferReply();
+    
     try {
+      // Play the music
       await interaction.client.distube.play(
         interaction.member.voice.channel,
         url,
-      ); //toca música
+      );
     } catch (error) {
+      // Handle age-restricted videos
       if (error.errorCode == "YTDLP_ERROR" && error.message.includes("age")) {
         await interaction.editReply({
-          content: "Este vídeo tem restrição de idade e não pode ser tocado!",
+          content: "This video is age-restricted and cannot be played!",
         });
       } else {
         await interaction.editReply({
-          content: "Erro ao tocar a música!",
+          content: "Error playing music!",
         });
       }
       return;
     }
+    
+    // Get the queue and current song information
     const queue = interaction.client.distube.getQueue(interaction.guild);
-    const actual_song = queue.songs[0];
-    const thumb = actual_song.thumbnail;
-    const title = actual_song.name;
+    const current_song = queue.songs[0];
+    const thumbnail = current_song.thumbnail;
+    const song_title = current_song.name;
+    
+    // Create music playback embed
     const embed = new EmbedBuilder()
       .setColor("#ffffff")
-      .setThumbnail(thumb)
-      .setTitle(`Tocando: ${title}`)
+      .setThumbnail(thumbnail)
+      .setTitle(`Now Playing: ${song_title}`)
       .setDescription(url);
-    if (in_fila) {
-      //adiciona música na fila
+    
+    // Reply based on whether song is queued or playing
+    if (in_queue) {
+      // Song was added to existing queue
       await interaction.editReply({
-        content: `Adicionada à fila! ${queue.songs.length - 1} músicas adiante!`,
+        content: `Added to queue! ${queue.songs.length - 1} songs ahead!`,
       });
     } else {
-      //toca música (zero fila)
+      // Playing first song in queue
       await interaction.editReply({ embeds: [embed] });
     }
   },
 };
 
 function validate_link(link) {
-  //valida o formato do link do youtube
+  // Validate YouTube link format
   const link_pattern =
     /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/;
   return link_pattern.test(link);
 }
 
 async function fetch_music(music) {
-  //busca música no youtube e retorna o link completo
+  // Search for music on YouTube and return complete link
   if (music.includes("spotify.com")) {
     return music;
   }
@@ -100,9 +126,9 @@ async function fetch_music(music) {
   }
 
   try {
-    const url_api = "https://www.googleapis.com/youtube/v3/search";
+    const api_url = "https://www.googleapis.com/youtube/v3/search";
     const base_link = "https://www.youtube.com/watch?v=";
-    const resposta = await axios.get(url_api, {
+    const response = await axios.get(api_url, {
       params: {
         q: music,
         part: "snippet",
@@ -112,12 +138,12 @@ async function fetch_music(music) {
       },
     });
 
-    if (!resposta.data.items || resposta.data.items.length === 0) {
+    if (!response.data.items || response.data.items.length === 0) {
       return "NOT_FOUND";
     }
 
-    const complement_link = resposta.data.items[0].id.videoId;
-    return base_link + complement_link;
+    const video_id = response.data.items[0].id.videoId;
+    return base_link + video_id;
   } catch (error) {
     if (error.response.status == 403) {
       return "LIMIT_REACHED";

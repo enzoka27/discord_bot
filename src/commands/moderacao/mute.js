@@ -1,62 +1,68 @@
-const {SlashCommandBuilder, PermissionFlagsBits} = require('discord.js'); //importa ferramentas do dc
-//Slash... = ferrameta para construir comandos com (/)
-//Permission... = objeto com as permissões do Discord em formato de bits
+/**
+ * Mute Command Module
+ * Temporarily silences a user for a specified duration
+ * Uses Discord timeout feature
+ * Requires Moderate Members permission
+ */
 
-module.exports = { //exporta como modulo para facil leitura para o bot
-    data: new SlashCommandBuilder() //cria novo comando com nome e descrição
+const {SlashCommandBuilder, PermissionFlagsBits} = require('discord.js');
+
+module.exports = {
+    // Command definition with required options and permissions
+    data: new SlashCommandBuilder()
         .setName('mute')
-        .setDescription('Silencia um usuário temporariamente') 
+        .setDescription('Temporarily silences a member') 
         .addUserOption(opt => 
-         opt.setName('usuário') 
-            .setDescription('Quem silenciar') 
+         opt.setName('user') 
+            .setDescription('User to mute') 
             .setRequired(true))
-        //add uma opção de usuários, onde vai mostrar uma seleção de membros, é OBRIGATÓRIO mostrar(.setRequired(true))
         .addIntegerOption(opt => 
-         opt.setName('duração')
-            .setDescription('Duração em minutos')
+         opt.setName('duration')
+            .setDescription('Duration in minutes')
             .setRequired(true))
-        //add uma opção numérica inteira, para a duração em minutos, tbm OBRIGATÓRIO
         .addStringOption(opt => 
-         opt.setName('motivo') 
-            .setDescription('Motivo do mute'))
-        //add opção motivo, como texto livre, sendo OPCIONAL (sem setRequired)
+         opt.setName('reason') 
+            .setDescription('Reason for mute'))
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-        //restringe o comando, só membros com permissão de mutar membros no server conseguem ver e usar o /mute
 
-    async execute(interation){ //função assíncrona chamada quando alguem usa o /mute.  
+    /**
+     * Execute mute command
+     * @param {Interaction} interation - Discord interaction object
+     */
+    async execute(interation){  
+        // Verify command is used in a server context
         if(!interation.guild){
             return interation.reply({ 
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!', 
+                content: 'This command can only be used in servers. Add me to a server to use it!', 
                 ephemeral: true
             });
-        }//garante que o comando só funciona em servidores 
+        }
 
-        const user = interation.options.getUser('usuário'); //pega usuario( getUser ) que foi selecionado na opção (addUserOption) 
+        // Fetch user, member, duration, and reason from command options
+        const user = interation.options.getUser('user');
         const member = await interation.guild.members.fetch(user.id).catch(() => null);
-        //extrai ID do usuario( .id ) e busca o membro do servidor pelo ID usando fetch, para pegar diretamente da API do dc
-        //isso é necessário porque .timeout() só existe no objeto member, não no user 
-        const duration = interation.options.getInteger('duração');
-        //pega o número inteiro digitado na opção duração
-        const reason = interation.options.getString('motivo') ?? 'Não definido';
-        //pega o txt da opção motivo, se não foi preenchida, usa 'Sem motivo' como padrão (operador ?? = nullish coalescing)
+        // Note: timeout() only exists on member object, not user object
+        const duration = interation.options.getInteger('duration');
+        const reason = interation.options.getString('reason') ?? 'Not specified';
+        // Nullish coalescing operator (??) - uses default if value is null/undefined
 
         if(!member){
             return interaction.reply({
-                content: 'Esse usuário não está no servidor.',
+                content: 'This user is not in the server.',
                 ephemeral: true,
             });
         }
 
         try{
             await member.timeout(duration * 60 * 1000, reason);
-            //aplica o timeout no membro, a conta converte minutos para miliseg, pois o dc exige o tempo nesse formato
+            // Apply timeout to member, duration converts minutes to milliseconds as Discord requires
             await interation.reply({ 
-                content: `${member} foi silenciado por ${duration} min.  Motivo: ${reason}.`, 
+                content: `${member} has been silenced for ${duration} min. Reason: ${reason}.`, 
                 ephemeral: false 
-            });//responde confirmando o mute. Usa member.user.tag (e não usuario.tag diretamente) porque o objeto é o member, então é preciso acessar o .user dentro dele   
+            });   
         } catch (error){
             await interation.reply({ 
-                content: 'Não foi possível silenciar este usuário.  Verifique se ele tem um cargo superior ao do bot.', 
+                content: 'Could not silence this user. Verify that the bot role is higher than the user role.', 
                 ephemeral: true
             });
         }

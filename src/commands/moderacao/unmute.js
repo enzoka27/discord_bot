@@ -1,44 +1,58 @@
+/**
+ * Unmute Command Module
+ * Removes the mute/timeout from a silenced user
+ * Requires Moderate Members permission
+ */
+
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
+    // Command definition with permission requirements
     data: new SlashCommandBuilder()
         .setName('unmute')
-        .setDescription('Remove o silêncio de um usuário')
+        .setDescription('Removes the mute from a user')
         .addUserOption(opt => 
-         opt.setName('usuário')
-            .setDescription('Quem remover o mute')
+         opt.setName('user')
+            .setDescription('User to unmute')
             .setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
+    /**
+     * Execute unmute command
+     * @param {Interaction} interaction - Discord interaction object
+     */
     async execute(interaction){
+        // Verify command is used in a server context
         if(!interaction.guild){
             return interaction.reply({
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!', 
+                content: 'This command can only be used in servers. Add me to a server to use it!', 
                 ephemeral: true,
             });
         }
 
-        const user = interaction.options.getUser('usuário');
+        // Fetch user and member
+        const user = interaction.options.getUser('user');
         const member = await interaction.guild.members.fetch(user.id).catch(() => null);
 
-        //verifica se o usuario realmente esta mutado
-        if(!member.isCommunicationDisabled()){ //.isCommunicationDisabled() verifica se o usuario esta atualmente em timeout
+        // Verify user is actually muted
+        if(!member.isCommunicationDisabled()){ 
+            // isCommunicationDisabled() checks if user is currently in timeout
             return interaction.reply({
-                content: `${member} não está silenciado.`,
+                content: `${member} is not muted.`,
                 ephemeral: true,
             });
         }
        
         try{
-            //.timeout(null) remove mute, cancelando o timeout ativo com o null
+            // timeout(null) removes mute by canceling the active timeout
             await member.timeout(null);
             await interaction.reply({
-                content: `${member} foi desmutado.`,
+                content: `${member} has been unmuted.`,
                 ephemeral: false,
             });
         } catch (error){
             await interaction.reply({
-                content: 'Não foi possível remover o silêncio.  Verifique se o cargo do bot é superior ao cargo do usuário.',
+                content: 'Could not remove silence. Verify that the bot role is higher than the user role.',
                 ephemeral: true,
             });
         }

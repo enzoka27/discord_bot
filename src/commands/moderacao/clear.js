@@ -1,39 +1,53 @@
+/**
+ * Clear Messages Command Module
+ * Bulk deletes a specified number of messages from a channel
+ * Requires Manage Messages permission
+ * Note: Discord API can only delete messages less than 14 days old
+ */
+
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
+    // Command definition with permission requirements
     data: new SlashCommandBuilder()
         .setName('clear')
-        .setDescription('Apaga mensagens do canal')
-        //quantidade de mensagens a apagar(obrigatorio)
+        .setDescription('Deletes messages from the channel')
         .addIntegerOption(opt => 
-         opt.setName('quantidade')
-            .setDescription('Quantas mensagens apagar(1-100)')
+         opt.setName('amount')
+            .setDescription('How many messages to delete (1-100)')
             .setRequired(true)
             .setMinValue(1)
-            .setMaxValue(100)) //o limite é 100 mensagens por vez (é possivel aumentar)    
+            .setMaxValue(100))
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
+    /**
+     * Execute clear messages command
+     * @param {Interaction} interaction - Discord interaction object
+     */
     async execute(interaction){
+        // Verify command is used in a server context
         if(!interaction.guild){
             return interaction.reply({ 
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!',
+                content: 'This command can only be used in servers. Add me to a server to use it!',
                 ephemeral: true,
             });
         }
 
-        const amount = interaction.options.getInteger('quantidade');
+        // Get number of messages to delete
+        const amount = interaction.options.getInteger('amount');
 
         try{
-            //apaga as mensagens do canal
-            const deleted = await interaction.channel.bulkDelete(amount, true); //true = ignora mensagens com +14 dias
+            // Bulk delete messages (ignores messages older than 14 days)
+            const deleted = await interaction.channel.bulkDelete(amount, true);
 
             await interaction.reply({
-                content: `${deleted.size} mensagens apagadas.`,
+                content: `${deleted.size} messages deleted.`,
                 ephemeral: true,
             });
-        } catch (error){ //o dc n permite apagar msgs com mais de 14 dias via "bulkDelete", por isso o erro é tratado no catch
+        } catch (error){ 
+            // Discord API limitation: cannot delete messages older than 14 days
             await interaction.reply({
-                content: 'Não foi possível apagar as mensagens.  Verifique se as mensagens têm menos de 14 dias.',
+                content: 'Could not delete messages. Verify that messages are less than 14 days old.',
                 ephemeral: true,
             });
         }

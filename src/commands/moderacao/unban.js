@@ -1,52 +1,64 @@
+/**
+ * Unban Command Module
+ * Removes a ban from a previously banned user
+ * Requires Ban Members permission
+ */
+
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
+    // Command definition with permission requirements
     data: new SlashCommandBuilder()
         .setName('unban')
-        .setDescription('Remove o ban de um usuário')
-        //id do usuario a desbanir
+        .setDescription('Removes the ban from a user')
         .addStringOption(opt =>
          opt.setName('id')
-            .setDescription('ID do usuário a desbanir')
+            .setDescription('ID of the user to unban')
             .setRequired(true))
         .addStringOption(opt =>
-         opt.setName('motivo')
-            .setDescription('Motivo do unban'))
+         opt.setName('reason')
+            .setDescription('Reason for unban'))
         .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
+    /**
+     * Execute unban command
+     * @param {Interaction} interaction - Discord interaction object
+     */
     async execute(interaction){
+        // Verify command is used in a server context
         if(!interaction.guild){
             return interaction.reply({
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!',
+                content: 'This command can only be used in servers. Add me to a server to use it!',
                 ephemeral: true,
             });
         }
 
+        // Fetch user ID and reason
         const userID = interaction.options.getString('id');
-        const reason = interaction.options.getString('motivo') ?? 'Não definido';
+        const reason = interaction.options.getString('reason') ?? 'Not specified';
 
         try{
-            //verifica se o usuario realmente esta banido
+            // Verify user is actually banned
             const banned = await interaction.guild.bans.fetch(userID).catch(() => null);
-            //.catch(() => null) -> se o .fetch() der erro, em vez de travar o bot, ele captura o erro silenciosamente e retorna null
+            // .catch() silently handles error and returns null instead of crashing
 
             if(!banned){
                 return interaction.reply({
-                    content: 'Este usuário não está banido ou o ID é inválido.',
+                    content: 'This user is not banned or the ID is invalid.',
                     ephemeral: true,
                 });
             }
 
-            //remove o ban
+            // Remove the ban
             await interaction.guild.members.unban(userID, reason);
 
             await interaction.reply({
-                content: `<@${userID}> foi desbanido.  Motivo: ${reason}.`,
+                content: `<@${userID}> has been unbanned. Reason: ${reason}.`,
                 ephemeral: false,
             });
         } catch (error){
             await interaction.reply({
-                content: 'Não foi possível desbanir este usuário.  Verifique se o ID está correto.',
+                content: 'Could not unban this user. Verify that the ID is correct.',
                 ephemeral: true,
             });
         }

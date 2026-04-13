@@ -1,26 +1,35 @@
+/**
+ * Command Deployment Script
+ * Registers all slash commands with Discord's API
+ * Run this script whenever new commands are added or modified
+ */
+
 require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
-const comandos = [];
-const pastaComandos = path.join(__dirname, 'commands');
+// Load all command files from the commands directory
+const commands = [];
+const commands_folder = path.join(__dirname, 'commands');
 
-for (const subpasta of fs.readdirSync(pastaComandos)) {
-  const arquivos = fs.readdirSync(path.join(pastaComandos, subpasta)).filter(f => f.endsWith('.js'));
-  for (const arquivo of arquivos) {
-    const cmd = require(path.join(pastaComandos, subpasta, arquivo));
-    comandos.push(cmd.data.toJSON());
+for (const subfolder of fs.readdirSync(commands_folder)) {
+  const files = fs.readdirSync(path.join(commands_folder, subfolder)).filter(f => f.endsWith('.js'));
+  for (const file of files) {
+    const cmd = require(path.join(commands_folder, subfolder, file));
+    commands.push(cmd.data.toJSON());
   }
 }
 
+// Initialize REST client for API communication
 const rest = new REST().setToken(process.env.DISCORD_TOKEN);
 
+// Deploy commands to Discord
 (async () => {
-  console.log('Registrando comandos...');
+  console.log('Registering commands...');
   await rest.put(
     Routes.applicationCommands(process.env.CLIENT_ID),
-    { body: comandos }
+    { body: commands }
   );
-  console.log('✅ Comandos registrados!');
+  console.log('✅ Commands registered successfully!');
 })();

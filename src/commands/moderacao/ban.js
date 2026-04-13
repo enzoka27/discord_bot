@@ -1,48 +1,62 @@
+/**
+ * Ban Command Module
+ * Permanently bans a user from the server
+ * Requires Ban Members permission
+ */
+
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('ban')
-        .setDescription('Bane um usuário do servidor')
-        .addUserOption(opt =>
-         opt.setName('usuário')
-            .setDescription('Quem banir')
-            .setRequired(true))
-        .addStringOption(opt =>
-         opt.setName('motivo')
-            .setDescription('Motivo do ban'))
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+  // Command definition with permission requirements
+  data: new SlashCommandBuilder()
+    .setName('ban')
+    .setDescription('Permanently bans a member from the server')
+    .addUserOption(opt =>
+     opt.setName('user')
+        .setDescription('User to ban')
+        .setRequired(true))
+    .addStringOption(opt =>
+     opt.setName('reason')
+        .setDescription('Reason for ban'))
+    .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
 
-    async execute(interaction){
-        if(!interaction.guild){
-            return interaction.reply({
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!',
-                ephemeral: true,
-            });
-        }
+  /**
+   * Execute ban command
+   * @param {Interaction} interaction - Discord interaction object
+   */
+  async execute(interaction){
+    // Verify command is used in a server context
+    if(!interaction.guild){
+      return interaction.reply({
+        content: 'This command can only be used in servers. Add me to a server to use it!',
+        ephemeral: true,
+      });
+    }
 
-        const user = interaction.options.getUser('usuário');
+        // Fetch user and reason
+        const user = interaction.options.getUser('user');
         const member = await interaction.guild.members.fetch(user.id).catch(() => null);
-        const reason = interaction.options.getString('motivo') ?? 'Não definido';
+        const reason = interaction.options.getString('reason') ?? 'Not specified';
 
+        // Verify user is in the server
         if(!member){
             return interaction.reply({
-                content: 'Esse usuário não está no servidor.',
+                content: 'This user is not in the server.',
                 ephemeral: true,
             });
         }
 
         try{
-            //bane o usuario do servidor
+            // Ban the member from the server
             await member.ban(user, { reason: reason });
 
             await interaction.reply({
-                content: `${member} foi banido.  Motivo: ${reason}.`,
+                content: `${member} has been banned. Reason: ${reason}.`,
                 ephemeral: false,
             });
         } catch (error){
             await interaction.reply({
-                content: 'Não foi possível banir este usuário.  Verifique se o cargo do bot é superior ao cargo do usuário.',
+                content: 'Could not ban this user. Verify that the bot role is higher than the user role.',
                 ephemeral: true,
             });
         }

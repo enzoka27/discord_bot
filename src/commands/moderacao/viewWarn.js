@@ -1,48 +1,60 @@
+/**
+ * View Warnings Command Module
+ * Displays all warnings for a specified user
+ * Requires server context to function
+ */
+
 const { SlashCommandBuilder } = require('discord.js');
-const { warnings } = require('./warn'); //exportar o Map no warn.js para acessar os mesmos dados
+const { warnings } = require('./warn'); // Import warnings map from warn.js
 
 module.exports = {
+    // Command definition
     data: new SlashCommandBuilder()
         .setName('view_warn')
-        .setDescription('Ver avisos de um usuário')
+        .setDescription('Views all warnings for a user')
         .addUserOption(opt =>
-            opt.setName('usuário')
-            .setDescription('Usuário')
+            opt.setName('user')
+            .setDescription('User to check')
             .setRequired(true)),
     
+    /**
+     * Execute view warnings command
+     * @param {Interaction} interaction - Discord interaction object
+     */
     async execute(interaction){
+        // Verify command is used in a server context
         if(!interaction.guild){
             return interaction.reply({ 
-                content: 'Este comando só pode ser usado em servidores.  Me adicione em um servidor e poderá utilizar os comandos devidamente!', 
+                content: 'This command can only be used in servers. Add me to a server to use it!', 
                 ephemeral: true,
             });
         }
         
-        const user = interaction.options.getUser('usuário');
-        //a mesma chave usada no warn.js para salvar os avisos
+        // Fetch target user
+        const user = interaction.options.getUser('user');
+        
+        // Create unique key matching warn.js format
         const key = `${interaction.guild.id}-${user.id}`;
-        //busca a lista de avisos desse usuário no Map
+        
+        // Fetch warning list for user
         const list = warnings.get(key);
 
-        //se n achou nd ou a lista está vazia, responde que n tem avisos e para aqui
+        // Check if user has any warnings
         if(!list || list.length === 0){
             return interaction.reply({
-                content: `<@${user.id}> não tem avisos.`,
+                content: `<@${user.id}> has no warnings.`,
                 ephemeral: true,
             });
         }
 
-        //transforma a lista de avisos em texto formatado
-        //w = cada aviso, i = índice(0, 1, 2, ...)
-        //i + 1 pq o índice começa em 0, mas precisa mostrar 1, 2, 3, ...
+        // Format warnings into readable text
         const text = list.map((w, i) =>
-            `${i + 1}. Motivo: '${w.reason}'\n   data: '${w.data}'\n   Aplicado por: '${w.aplicadoPor}'`
+            `${i + 1}. Reason: '${w.reason}'\n   Date: '${w.date}'\n   Issued by: '${w.issued_by}'`
         ).join('\n\n');
 
-        //responde com o texto formatado dentro de ``` ``` (bloco de codigo no dc)
-        // \` é um backtick escapado (necessário dentro de template strings)
+        // Reply with formatted warnings in code block
         await interaction.reply({
-            content: `Avisos de <@${user.id}>:\`\`\`\n${text}\`\`\``,
+            content: `Warnings for <@${user.id}>:\`\`\`\n${text}\`\`\``,
             ephemeral: true,
         });
     }
