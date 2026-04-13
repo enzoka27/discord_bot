@@ -31,7 +31,7 @@ module.exports = {
       INVALID_LINK: "Link inválido!",
       NOT_FOUND: "Música não encontrada!",
       LIMIT_REACHED: "Limite de requisições atingido!",
-      API_ERROR: "Erro ao buscar música!"
+      API_ERROR: "Erro ao buscar música!",
     };
     if (url in api_responses) {
       //retorna erros da api
@@ -47,13 +47,13 @@ module.exports = {
         url,
       ); //toca música
     } catch (error) {
-      if (error.errorCode == 'YTDLP_ERROR' && error.message.includes('age')) {
+      if (error.errorCode == "YTDLP_ERROR" && error.message.includes("age")) {
         await interaction.editReply({
-          content: "Este vídeo tem restrição de idade e não pode ser tocado!"
+          content: "Este vídeo tem restrição de idade e não pode ser tocado!",
         });
       } else {
         await interaction.editReply({
-          content: "Erro ao tocar a música!"
+          content: "Erro ao tocar a música!",
         });
       }
       return;
