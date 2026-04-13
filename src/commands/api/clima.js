@@ -146,7 +146,7 @@ module.exports = {
           const message = await interaction.fetchReply();
 
           // Wait for button click (30 second timeout)
-          const button_click = await message.awaitMessageComponent({ time: 30000 });
+          const button_click = await message.awaitMessageComponent({ time: 30000 , filter: (i)=>i.user.id == interaction.user.id });
 
           // Show modal for city input
           await button_click.showModal(modal);
