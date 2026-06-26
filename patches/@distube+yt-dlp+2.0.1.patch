@@ -1,0 +1,50 @@
+diff --git a/node_modules/@distube/yt-dlp/bin/yt-dlp.exe b/node_modules/@distube/yt-dlp/bin/yt-dlp.exe
+index bdcccd5..81024dd 100644
+Binary files a/node_modules/@distube/yt-dlp/bin/yt-dlp.exe and b/node_modules/@distube/yt-dlp/bin/yt-dlp.exe differ
+diff --git a/node_modules/@distube/yt-dlp/dist/index.js b/node_modules/@distube/yt-dlp/dist/index.js
+index b17b126..3d609e4 100644
+--- a/node_modules/@distube/yt-dlp/dist/index.js
++++ b/node_modules/@distube/yt-dlp/dist/index.js
+@@ -73,16 +73,17 @@ var args = /* @__PURE__ */ __name((url, flags = {}) => [url].concat((0, import_d
+ var json = /* @__PURE__ */ __name((url, flags, options) => {
+   const process2 = (0, import_node_child_process.spawn)(YTDLP_PATH, args(url, flags), options);
+   return new Promise((resolve, reject) => {
+-    let output = "";
+-    process2.stdout?.on("data", (chunk) => {
+-      output += chunk;
+-    });
+-    process2.stderr?.on("data", (chunk) => {
+-      output += chunk;
+-    });
++    let stdout = "";
++    let stderr = "";
++    process2.stdout?.on("data", (chunk) => { stdout += chunk; });
++    process2.stderr?.on("data", (chunk) => { stderr += chunk; });
+     process2.on("close", (code) => {
+-      if (code === 0) resolve(JSON.parse(output));
+-      else reject(new Error(output));
++      if (code === 0) {
++        try { resolve(JSON.parse(stdout)); }
++        catch (e) { reject(new Error(stderr || e.message)); }
++      } else {
++        reject(new Error(stderr || stdout));
++      }
+     });
+     process2.on("error", reject);
+   });
+@@ -144,7 +145,6 @@ var YtDlpPlugin = class extends import_distube.PlayableExtractorPlugin {
+     const info = await json(url, {
+       dumpSingleJson: true,
+       noWarnings: true,
+-      noCallHome: true,
+       preferFreeFormats: true,
+       skipDownload: true,
+       simulate: true
+@@ -174,7 +174,6 @@ var YtDlpPlugin = class extends import_distube.PlayableExtractorPlugin {
+     const info = await json(song.url, {
+       dumpSingleJson: true,
+       noWarnings: true,
+-      noCallHome: true,
+       preferFreeFormats: true,
+       skipDownload: true,
+       simulate: true,

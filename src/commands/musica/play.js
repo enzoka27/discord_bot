@@ -38,6 +38,8 @@ module.exports = {
       return;
     }
 
+    await interaction.deferReply();
+    
     // Fetch and validate music link
     const url = await fetch_music(music);
     
@@ -57,7 +59,6 @@ module.exports = {
 
     // Check if queue already exists
     let in_queue = await interaction.client.distube.getQueue(interaction.guild);
-    await interaction.deferReply();
     
     try {
       // Play the music
